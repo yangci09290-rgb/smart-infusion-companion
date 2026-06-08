@@ -1,0 +1,32 @@
+#include "sys.h"
+
+SENSOR SensorData;	 // 传感器结构体定义
+THRESHOLD Threshold; // 阈值结构体定义
+SYSTEM System;		 // 系统标志位结构体定义
+
+int main(void)
+{
+    delay_init();		// 延时函数初始化
+    BdgFlashInit();		// flash初始化包含阈值参数初始化
+    NVIC_Config();		// 中断优先级配置
+    KEY_Init();			// 按键初始化
+    Beep_Init();		// 蜂鸣器初始化
+    oled_Init();		// oled初始化
+    LED_GPIO_Config();	// LED灯初始化
+    RELAY_GPIO_Config();// 继电器初化
+    Drip_Init();		// 点滴传感器初始化
+    Adc_Init();			// ADC初始化
+    DS18B20_Init();		// DS18B20初始化
+    TIM2_Init(99, 7199);// 定时器2初始化 定时扫描按键
+    TIM1_Int_Init(99, 7199); //定时器1初始化
+    oled_Clear();		// 清屏
+
+    /*******************************************/
+    while (1) {
+        DripRate_Check();//获取滴速
+        SensorData.WtrLevelVal = Get_Adc_Average(8, 5) * 50 / 4096; //获取液位
+        read_ds18b20(&SensorData.TempVal);//采集体温
+        Mode_selection(); // 模式选择（按键1选择模式）
+        save_Threshold(); // 当阈值数据有改变是存入flash函数
+    }
+}
